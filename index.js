@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import puppeteer from 'puppeteer-core';
 import fs from 'fs';
-import { between, CreateProfile, DeleteProfile, startBrowser, wait } from './utils/functions.js';
+import { wait, between, CloseBrowser, CreateProfile, DeleteProfile, StartBrowser } from './utils/functions.js';
 
 // Inputs 
 const INPUTS = JSON.parse(fs.readFileSync("inputs.json", "utf-8")),
@@ -11,8 +11,8 @@ const INPUTS = JSON.parse(fs.readFileSync("inputs.json", "utf-8")),
         timeout: 0
     };
 
+while (true) {
 
-(async () => {
 
     //#region (Creating Profile, Start Browser)
     // Create Profile
@@ -22,16 +22,17 @@ const INPUTS = JSON.parse(fs.readFileSync("inputs.json", "utf-8")),
     });
 
     // Start Browser
-    let ws = await startBrowser(PROFILE_ID);
+    let ws = await StartBrowser(PROFILE_ID);
 
     if (!ws) {
         await DeleteProfile(PROFILE_ID);
         console.log("Please Try Again!");
-        return false;
+        break;
     }
 
     let browser = await puppeteer.connect({
-        headless: false,
+        headless: "new",
+        protocolTimeout: 240000,
         browserWSEndpoint: ws
     });
     //#endregion (Creating Profile, Start Browser) 
@@ -40,12 +41,7 @@ const INPUTS = JSON.parse(fs.readFileSync("inputs.json", "utf-8")),
         let { keyword, location, personalization, listing_url } = INPUTS[i],
             page = await browser.newPage();
 
-        try {
-            await page.goto(SITE_URL, PAGE_OPTIONS);
-        } catch (error) {
-            continue;
-        }
-
+        await page.goto(SITE_URL, PAGE_OPTIONS);
 
         // (Type Keyword, Show listings)
         await page.type("#global-enhancements-search-query", keyword, { delay: 100 });
@@ -63,9 +59,10 @@ const INPUTS = JSON.parse(fs.readFileSync("inputs.json", "utf-8")),
             let listbox = document.querySelector('#shop-location-input').getAttribute('aria-controls'),
                 listBoxCon = document.querySelector(`ul[id="${listbox}"]`);
             if (!listBoxCon.firstChild) return false
-            listBoxCon.firstChild?.dispatchEvent(new Event("click"));
+            listBoxCon.firstChild?.click();
             return true;
         });
+
         if (!valid) {
             console.log("Location not found in filters so we will skip this listing");
             continue;
@@ -74,6 +71,99 @@ const INPUTS = JSON.parse(fs.readFileSync("inputs.json", "utf-8")),
         await page.click(".search-filters-modal button[aria-label='Close']"); // Close Filters Sidebar
         //#endregion Filters 
 
+        //#region Finding Listing
+
+        await page.evaluate(async (listing_url) => {
+
+            //#region Functions
+            // Wait
+            const wait = (ms) => new Promise((res, rej) => setTimeout(res, ms));
+            // Get Random Number Between
+            function between(from, to) {
+                return Math.floor(Math.random() * (to - from + 1)) + from;
+            }
+            //#endregion Functions 
+            let founded = false;
+
+            while (true) {
+                let scroll = 0,
+                    interval = setInterval(() => {
+                        scroll += between(20, 150);
+                        window.scrollTo(0, scroll);
+                    }, 200);
+                await wait(between(15, 30) * 1000);
+                clearInterval(interval)
+
+                let listings = document.querySelectorAll('ul[data-results-grid-container] li'),
+                    paginationBtn = document.querySelector("[data-search-pagination] .wt-hide-lg .wt-action-group__item-container:last-child a:not([disabled])"),
+                    abort = false,
+                    foundedListing = null;
+
+                listings = Array.from(listings);
+                // Loop
+                for (let i = 0; i < listings.length; i++) {
+                    let listing = listings[i],
+                        listingLink = listing.querySelector(".listing-link");
+
+                    if (listingLink.href.includes(listing_url)) {
+                        listingLink.target = "_self";
+                        foundedListing = listingLink;
+                        abort = true;
+                        break;
+                    }
+                }
+
+                // Abort
+                if (abort) {
+                    foundedListing.click();
+                    founded = true;
+                    break;
+                }
+
+                paginationBtn.click(); // Goto next page
+            }
+            return founded;
+        }, listing_url);
+
+        await page.waitForNavigation({ timeout: 0 });
+        const url = await page.evaluate(() => document.location.href);
+        if (!url.includes(listing_url)) {
+            console.log("We are not on product page after finding so we will skip this");
+            continue;
+        }
+
+        //#endregion Finding Listing 
+
+        //#region Perform Steps on Product Page
+        // Images Step
+        for (let i = 0; i < 5; i++) {
+            try {
+                await page.click("[data-carousel-nav-button][aria-label='Next image']");
+                await wait(between(1, 5) * 1000);
+            } catch (error) {
+                break;
+            }
+        }
+        // Reviews Step
+        for (let i = 0; i < 5; i++) {
+            try {
+                await page.click("[aria-label='Pagination'] [data-reviews-pagination] .wt-action-group__item-container:last-child a");
+                await wait(between(1, 5) * 1000);
+
+            } catch (error) {
+                break;
+            }
+        }
+
+        //#endregion Perform Steps on Product Page 
+
     }
 
-})();
+    await CloseBrowser(PROFILE_ID);
+    await DeleteProfile(PROFILE_ID);
+
+    console.log(`Waiting ${process.env.SESSION_WAIT}min`);
+    await wait((process.env.SESSION_WAIT * 1000) * 60) // Waiting
+    console.log(`Starting Again...`);
+
+}

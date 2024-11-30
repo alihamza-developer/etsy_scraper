@@ -94,7 +94,7 @@ function DeleteProfile(id) {
 }
 
 // Start Browser
-function startBrowser(profile_id) {
+function StartBrowser(profile_id) {
     return new Promise(async (res, rej) => {
         let puppeteer = false;
 
@@ -112,6 +112,13 @@ function startBrowser(profile_id) {
 
     });
 }
+// Close Browser
+function CloseBrowser(profile_id) {
+    return new Promise(async (res, rej) => {
+        await axios.get(ApiUrl(`browser/stop?user_id=${profile_id}`));
+        res(true);
+    });
+}
 
 //#endregion Scraper Functions 
 
@@ -122,5 +129,6 @@ export {
     trim,
     CreateProfile, // Create Profile
     DeleteProfile, // Delete Profile
-    startBrowser, // Start Browser From Profile
+    StartBrowser, // Start Browser From Profile
+    CloseBrowser,
 };
