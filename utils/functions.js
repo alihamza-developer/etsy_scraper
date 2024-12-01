@@ -120,6 +120,15 @@ function CloseBrowser(profile_id) {
     });
 }
 
+// Is Exists
+function isExists(page, selector) {
+    return new Promise(async (res, rej) => {
+        let exists = await page.$(selector);
+        res(exists);
+    });
+
+}
+
 //#endregion Scraper Functions 
 
 export {
@@ -131,4 +140,5 @@ export {
     DeleteProfile, // Delete Profile
     StartBrowser, // Start Browser From Profile
     CloseBrowser,
+    isExists
 };

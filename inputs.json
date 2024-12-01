@@ -1,9 +1,15 @@
 [
     {
-        "keyword": "earrings",
-        "location": "Los Angeles",
-        "personalization": "This is Third Personalization",
-        "listing_url": "https://www.etsy.com/listing/1532120731"
+        "keyword": "bags and purses",
+        "location": "Denver",
+        "personalization": "This is fourth Personalization",
+        "listing_url": "https://www.etsy.com/listing/1740542927"
+    },
+    {
+        "keyword": "Necklace for women",
+        "location": "New York",
+        "personalization": "This is First Personalization",
+        "listing_url": "https://www.etsy.com/listing/1702193770"
     },
     {
         "keyword": "watches",
@@ -16,12 +22,6 @@
         "location": "New York",
         "personalization": "This is First Personalization",
         "listing_url": "https://www.etsy.com/listing/1336574347"
-    },
-    {
-        "keyword": "bags and purses",
-        "location": "Denver",
-        "personalization": "This is fourth Personalization",
-        "listing_url": "https://www.etsy.com/listing/1800992844"
     },
     {
         "keyword": "wallets",

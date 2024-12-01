@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import puppeteer from 'puppeteer-core';
 import fs from 'fs';
-import { wait, between, CloseBrowser, CreateProfile, DeleteProfile, StartBrowser } from './utils/functions.js';
+import { wait, between, CloseBrowser, CreateProfile, DeleteProfile, StartBrowser, isExists } from './utils/functions.js';
 
 // Inputs 
 const INPUTS = JSON.parse(fs.readFileSync("inputs.json", "utf-8")),
@@ -155,9 +155,52 @@ while (true) {
             }
         }
 
+        // Add to Cart
+
+        let dropdowns = await page.evaluate(() => {
+            let sinputs = document.querySelectorAll('select[data-variation-number]'),
+                dropdowns = {};
+            sinputs.forEach((select, i) => {
+                let options = select.querySelectorAll("option"),
+                    targetOption = null;
+                options.forEach(option => {
+                    if (!option.hasAttribute("disabled") && option.value != "" && !targetOption)
+                        targetOption = option;
+
+                });
+                dropdowns[`select[data-variation-number="${i}"]`] = targetOption.value;
+            });
+            return dropdowns;
+        });
+
+
+        for (const selector in dropdowns) {
+            let value = dropdowns[selector];
+            await page.select(selector, value);
+            await page.waitForNavigation();
+        }
+
+        // Set Personalization
+        if (isExists(page, "#listing-page-personalization-textarea"))
+            await page.type('#listing-page-personalization-textarea', personalization, { delay: 100 });
+
+
+        try {
+            await page.click('[data-selector="add-to-cart-button"] button');
+            await page.waitForNavigation({ waitUntil: 'networkidle0' });
+        } catch (e) { }
+
         //#endregion Perform Steps on Product Page 
 
     }
+
+    //#region Last Step
+
+    let page = await browser.newPage();
+
+    await page.goto(LAST_STEP_LISTING, PAGE_OPTIONS);
+    //#endregion Last Step 
+
 
     await CloseBrowser(PROFILE_ID);
     await DeleteProfile(PROFILE_ID);

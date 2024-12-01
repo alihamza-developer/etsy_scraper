@@ -11,9 +11,12 @@
   "description": "",
   "type": "module",
   "dependencies": {
+    "antibotbrowser": "^2.0.0",
     "axios": "^1.7.8",
     "dotenv": "^16.4.5",
     "puppeteer": "^23.9.0",
-    "puppeteer-core": "^23.9.0"
+    "puppeteer-core": "^23.9.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
   }
 }
