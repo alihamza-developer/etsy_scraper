@@ -1,15 +1,15 @@
 [
     {
-        "keyword": "bags and purses",
-        "location": "Denver",
-        "personalization": "This is fourth Personalization",
-        "listing_url": "https://www.etsy.com/listing/1740542927"
-    },
-    {
         "keyword": "Necklace for women",
         "location": "New York",
         "personalization": "This is First Personalization",
         "listing_url": "https://www.etsy.com/listing/1702193770"
+    },
+    {
+        "keyword": "bags and purses",
+        "location": "Denver",
+        "personalization": "This is fourth Personalization",
+        "listing_url": "https://www.etsy.com/listing/1740542927"
     },
     {
         "keyword": "watches",

@@ -59,7 +59,7 @@ function CreateProfile(data = {}) {
         try {
             let response = await axios.post(ApiUrl('user/create'), {
                 name,
-                proxyid: between(1, process.env.MAX_PROXIES),
+                proxyid: process.env.PROXY_ID,
                 group_id
             });
 
@@ -129,6 +129,16 @@ function isExists(page, selector) {
 
 }
 
+// Wait For Products To Load
+function waitForProductsLoad(page) {
+    return new Promise(async (res, rej) => {
+        await page.waitForResponse(response =>
+            response.url().includes("member/neu/specs/listingCards") && response.status() === 200
+        );
+
+        res(true);
+    });
+}
 //#endregion Scraper Functions 
 
 export {
@@ -139,6 +149,7 @@ export {
     CreateProfile, // Create Profile
     DeleteProfile, // Delete Profile
     StartBrowser, // Start Browser From Profile
-    CloseBrowser,
-    isExists
+    CloseBrowser, // Close Browser
+    waitForProductsLoad, // Wait For Products To Load
+    isExists,
 };

@@ -35,6 +35,7 @@ while (true) {
         protocolTimeout: 240000,
         browserWSEndpoint: ws
     });
+
     //#endregion (Creating Profile, Start Browser) 
 
     for (let i = 0; i < INPUTS.length; i++) {
@@ -46,8 +47,23 @@ while (true) {
         // (Type Keyword, Show listings)
         await page.type("#global-enhancements-search-query", keyword, { delay: 100 });
         await page.keyboard.press("Enter");
-        await page.waitForNavigation({ timeout: 0 });
+        console.log("Start Waiting");
+        await waitForProductsLoad();
+        console.log("Listing");
 
+        let urls = await page.evaluate(() => {
+            let listings = Array.from(document.querySelectorAll('ul[data-results-grid-container] li')),
+                urls = [];
+            // Loop
+            listings.forEach(listing => {
+                let listingLink = listing.querySelector(".listing-link");
+                urls.push(listingLink);
+            });
+            return urls;
+        });
+        console.log(urls);
+
+        continue;
 
         //#region Filters
         await page.click("#search-filter-button");
@@ -177,7 +193,7 @@ while (true) {
         for (const selector in dropdowns) {
             let value = dropdowns[selector];
             await page.select(selector, value);
-            await page.waitForNavigation();
+            await wait(5000);
         }
 
         // Set Personalization
@@ -194,6 +210,7 @@ while (true) {
 
     }
 
+    break;
     //#region Last Step
 
     let page = await browser.newPage();
