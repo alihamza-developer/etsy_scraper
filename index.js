@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import puppeteer from 'puppeteer-core';
 import fs from 'fs';
-import { wait, between, CloseBrowser, CreateProfile, DeleteProfile, StartBrowser, isExists } from './utils/functions.js';
+import { wait, between, CloseBrowser, CreateProfile, DeleteProfile, StartBrowser, isExists, waitForProductsLoad } from './utils/functions.js';
 
 // Inputs 
 const INPUTS = JSON.parse(fs.readFileSync("inputs.json", "utf-8")),
@@ -90,7 +90,6 @@ while (true) {
         //#region Finding Listing
 
         await page.evaluate(async (listing_url) => {
-
             //#region Functions
             // Wait
             const wait = (ms) => new Promise((res, rej) => setTimeout(res, ms));
@@ -150,7 +149,8 @@ while (true) {
 
         //#endregion Finding Listing 
 
-        //#region Perform Steps on Product Page
+        //#region Perform Steps
+
         // Images Step
         for (let i = 0; i < 5; i++) {
             try {
@@ -171,7 +171,8 @@ while (true) {
             }
         }
 
-        // Add to Cart
+
+        //#region Add To Cart
 
         let dropdowns = await page.evaluate(() => {
             let sinputs = document.querySelectorAll('select[data-variation-number]'),
@@ -206,7 +207,11 @@ while (true) {
             await page.waitForNavigation({ waitUntil: 'networkidle0' });
         } catch (e) { }
 
-        //#endregion Perform Steps on Product Page 
+        //#endregion Add To Cart 
+
+
+
+        //#endregion Perform Steps
 
     }
 
