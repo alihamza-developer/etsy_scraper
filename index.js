@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import puppeteer from 'puppeteer-core';
 import fs from 'fs';
-import { wait, between, CloseBrowser, CreateProfile, DeleteProfile, StartBrowser, isExists, waitForProductsLoad } from './utils/functions.js';
+import { wait, between, CloseBrowser, CreateProfile, DeleteProfile, StartBrowser, isExists } from './utils/functions.js';
 
 // Inputs 
 const INPUTS = JSON.parse(fs.readFileSync("inputs.json", "utf-8")),
@@ -35,7 +35,6 @@ while (true) {
         protocolTimeout: 240000,
         browserWSEndpoint: ws
     });
-
     //#endregion (Creating Profile, Start Browser) 
 
     for (let i = 0; i < INPUTS.length; i++) {
@@ -47,23 +46,8 @@ while (true) {
         // (Type Keyword, Show listings)
         await page.type("#global-enhancements-search-query", keyword, { delay: 100 });
         await page.keyboard.press("Enter");
-        console.log("Start Waiting");
-        await waitForProductsLoad();
-        console.log("Listing");
+        await page.waitForNavigation({ timeout: 0 });
 
-        let urls = await page.evaluate(() => {
-            let listings = Array.from(document.querySelectorAll('ul[data-results-grid-container] li')),
-                urls = [];
-            // Loop
-            listings.forEach(listing => {
-                let listingLink = listing.querySelector(".listing-link");
-                urls.push(listingLink);
-            });
-            return urls;
-        });
-        console.log(urls);
-
-        continue;
 
         //#region Filters
         await page.click("#search-filter-button");
@@ -90,6 +74,7 @@ while (true) {
         //#region Finding Listing
 
         await page.evaluate(async (listing_url) => {
+
             //#region Functions
             // Wait
             const wait = (ms) => new Promise((res, rej) => setTimeout(res, ms));
@@ -149,8 +134,7 @@ while (true) {
 
         //#endregion Finding Listing 
 
-        //#region Perform Steps
-
+        //#region Perform Steps on Product Page
         // Images Step
         for (let i = 0; i < 5; i++) {
             try {
@@ -171,8 +155,7 @@ while (true) {
             }
         }
 
-
-        //#region Add To Cart
+        // Add to Cart
 
         let dropdowns = await page.evaluate(() => {
             let sinputs = document.querySelectorAll('select[data-variation-number]'),
@@ -194,7 +177,7 @@ while (true) {
         for (const selector in dropdowns) {
             let value = dropdowns[selector];
             await page.select(selector, value);
-            await wait(5000);
+            await page.waitForNavigation();
         }
 
         // Set Personalization
@@ -207,15 +190,10 @@ while (true) {
             await page.waitForNavigation({ waitUntil: 'networkidle0' });
         } catch (e) { }
 
-        //#endregion Add To Cart 
-
-
-
-        //#endregion Perform Steps
+        //#endregion Perform Steps on Product Page 
 
     }
 
-    break;
     //#region Last Step
 
     let page = await browser.newPage();
