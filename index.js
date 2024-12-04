@@ -198,11 +198,13 @@ while (true) {
 
     let page = await browser.newPage();
 
-    await page.goto(LAST_STEP_LISTING, PAGE_OPTIONS);
+    await page.goto(LAST_STEP_LISTING, { timeout: 0, waitUntil: "networkidle2" });
     await page.evaluate(() => {
         let listings = document.querySelectorAll('ul[data-results-grid-container] li'),
             target = listings[between(0, listings.length)],
             link = target?.querySelector(".listing-link");
+        listingLink.target = "_self";
+
         link.click();
     });
     await page.waitForNavigation({ timeout: 0, waitUntil: "networkidle2" });
