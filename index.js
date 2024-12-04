@@ -37,6 +37,8 @@ while (true) {
     });
     //#endregion (Creating Profile, Start Browser) 
 
+
+
     for (let i = 0; i < INPUTS.length; i++) {
         let { keyword, location, personalization, listing_url } = INPUTS[i],
             page = await browser.newPage();
@@ -194,20 +196,84 @@ while (true) {
 
     }
 
+
     //#region Last Step
 
     let page = await browser.newPage();
 
-    await page.goto(LAST_STEP_LISTING, { timeout: 0, waitUntil: "networkidle2" });
+    await page.goto(process.env.LAST_STEP_LISTING, { timeout: 0, waitUntil: "networkidle0" });
+    await wait(20000);
     await page.evaluate(() => {
+        // Get Random Number Between
+        function between(from, to) {
+            return Math.floor(Math.random() * (to - from + 1)) + from;
+        }
         let listings = document.querySelectorAll('ul[data-results-grid-container] li'),
             target = listings[between(0, listings.length)],
             link = target?.querySelector(".listing-link");
-        listingLink.target = "_self";
+        link.target = "_self";
 
         link.click();
     });
     await page.waitForNavigation({ timeout: 0, waitUntil: "networkidle2" });
+
+    //#region Perform Steps on Product Page
+    // Images Step
+    for (let i = 0; i < 5; i++) {
+        try {
+            await page.click("[data-carousel-nav-button][aria-label='Next image']");
+            await wait(between(1, 5) * 1000);
+        } catch (error) {
+            break;
+        }
+    }
+    // Reviews Step
+    for (let i = 0; i < 5; i++) {
+        try {
+            await page.click("[aria-label='Pagination'] [data-reviews-pagination] .wt-action-group__item-container:last-child a");
+            await wait(between(1, 5) * 1000);
+
+        } catch (error) {
+            break;
+        }
+    }
+
+    // Add to Cart
+
+    let dropdowns = await page.evaluate(() => {
+        let sinputs = document.querySelectorAll('select[data-variation-number]'),
+            dropdowns = {};
+        sinputs.forEach((select, i) => {
+            let options = select.querySelectorAll("option"),
+                targetOption = null;
+            options.forEach(option => {
+                if (!option.hasAttribute("disabled") && option.value != "" && !targetOption)
+                    targetOption = option;
+
+            });
+            dropdowns[`select[data-variation-number="${i}"]`] = targetOption.value;
+        });
+        return dropdowns;
+    });
+
+
+    for (const selector in dropdowns) {
+        let value = dropdowns[selector];
+        await page.select(selector, value);
+        await page.waitForNavigation();
+    }
+
+    // Set Personalization
+    if (isExists(page, "#listing-page-personalization-textarea"))
+        await page.type('#listing-page-personalization-textarea', personalization, { delay: 100 });
+
+
+    try {
+        await page.click('[data-selector="add-to-cart-button"] button');
+        await page.waitForNavigation({ waitUntil: 'networkidle0' });
+    } catch (e) { }
+
+    //#endregion Perform Steps on Product Page
     //#endregion Last Step 
 
 
