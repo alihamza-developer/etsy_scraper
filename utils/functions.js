@@ -59,7 +59,7 @@ function CreateProfile(data = {}) {
         try {
             let response = await axios.post(ApiUrl('user/create'), {
                 name,
-                proxyid: between(1, process.env.MAX_PROXIES),
+                proxyid: process.env.PROXY_ID,
                 group_id
             });
 

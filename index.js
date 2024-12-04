@@ -46,7 +46,7 @@ while (true) {
         // (Type Keyword, Show listings)
         await page.type("#global-enhancements-search-query", keyword, { delay: 100 });
         await page.keyboard.press("Enter");
-        await page.waitForNavigation({ timeout: 0 });
+        await page.waitForNavigation({ timeout: 0, waitUntil: "networkidle2" });
 
 
         //#region Filters
@@ -199,6 +199,13 @@ while (true) {
     let page = await browser.newPage();
 
     await page.goto(LAST_STEP_LISTING, PAGE_OPTIONS);
+    await page.evaluate(() => {
+        let listings = document.querySelectorAll('ul[data-results-grid-container] li'),
+            target = listings[between(0, listings.length)],
+            link = target?.querySelector(".listing-link");
+        link.click();
+    });
+    await page.waitForNavigation({ timeout: 0, waitUntil: "networkidle2" });
     //#endregion Last Step 
 
 
